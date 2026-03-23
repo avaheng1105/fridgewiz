@@ -1,0 +1,104 @@
+.progressCard {
+  margin-top: 8px;
+}
+
+.progressBar {
+  height: 8px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand-green), var(--brand-green-light));
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+.filterRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 16px 0 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.filterRow::-webkit-scrollbar { display: none; }
+
+.itemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.groceryItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.groceryItem:hover {
+  border-color: var(--border-moderate);
+}
+
+.groceryItem.checked {
+  opacity: 0.5;
+}
+
+.checkbox {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid var(--border-moderate);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.checkboxDone {
+  background: var(--brand-green);
+  border-color: var(--brand-green);
+  color: #fff;
+}
+
+.itemInfo {
+  flex: 1;
+}
+
+.itemName {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.checked .itemName {
+  text-decoration: line-through;
+}
+
+.itemMeta {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.addBar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 16px;
+  padding: 0;
+}

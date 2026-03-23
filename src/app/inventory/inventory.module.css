@@ -1,0 +1,70 @@
+.summaryRow {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.filterRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 16px 0 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.filterRow::-webkit-scrollbar { display: none; }
+
+.itemGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.itemCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s;
+}
+
+.itemCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-moderate);
+}
+
+.itemTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.itemEmoji {
+  font-size: 1.5rem;
+}
+
+.itemName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.itemQty {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--brand-green);
+}
+
+.itemExpiry {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}

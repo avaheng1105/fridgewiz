@@ -1,0 +1,46 @@
+{
+  "name": "FridgeWiz",
+  "short_name": "FridgeWiz",
+  "description": "Smart grocery and kitchen inventory manager",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#10b981",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["food", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Groceries",
+      "url": "/groceries",
+      "description": "View grocery list"
+    },
+    {
+      "name": "Inventory",
+      "url": "/inventory",
+      "description": "Check your inventory"
+    }
+  ]
+}
