@@ -88,16 +88,16 @@ export default function GroceriesPage() {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, checked: newChecked } : i)));
 
     const { error: updateError } = await supabase.from("grocery_list").update({ status: newChecked ? 'bought' : 'pending' }).eq("id", id);
-    
+
     let syncError = null;
     if (newChecked) {
       const sessionRes = await supabase.auth.getSession();
       const userId = sessionRes.data.session?.user.id;
-      
-      const py = { 
-        item_name: item.name, 
-        quantity: Number(item.rawQty) || 1, 
-        unit: item.rawUnit || 'pieces', 
+
+      const py = {
+        item_name: item.name,
+        quantity: Number(item.rawQty) || 1,
+        unit: item.rawUnit || 'pieces',
         category: item.category,
         emoji: getEmoji(item.category, item.name),
         is_countable: ["pcs", "piece", "pieces", "packs"].includes((item.rawUnit || 'pieces').toLowerCase())
@@ -106,7 +106,7 @@ export default function GroceriesPage() {
 
       const { data, error } = await supabase.from("inventory").insert([py]).select().single();
       syncError = error;
-      
+
       if (!error && userId) {
         await supabase.from("activity_log").insert([{
           user_id: userId,
@@ -117,7 +117,7 @@ export default function GroceriesPage() {
       }
 
       if (data) {
-        fetch("https://n8n.ivangan.my/webhook-test/inventory-item-added", {
+        fetch("https://n8n.ivangan.my/webhook/inventory-item-added", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -133,7 +133,7 @@ export default function GroceriesPage() {
         const { error } = await supabase.from("inventory").delete().eq("id", data[0].id);
         syncError = error;
       }
-      
+
       // Also delete the most recent "Bought" activity log for this item
       const sessionRes = await supabase.auth.getSession();
       const userId = sessionRes.data.session?.user.id;
@@ -145,7 +145,7 @@ export default function GroceriesPage() {
           .eq("item", item.name)
           .order("created_at", { ascending: false })
           .limit(1);
-          
+
         if (logData && logData.length > 0) {
           await supabase.from("activity_log").delete().eq("id", logData[0].id);
         }
@@ -179,12 +179,12 @@ export default function GroceriesPage() {
     if (editingItemId) {
       const id = editingItemId;
       setEditingItemId(null);
-      
+
       setItems((prev) => prev.map(i => i.id === id ? { ...i, name: itemText, qty: `${q} ${u}`.trim(), rawQty: q, rawUnit: u, category: c } : i));
-      
+
       const py = { item_name: itemText, quantity: q, unit: u, category: c };
       const { error } = await supabase.from("grocery_list").update(py).eq("id", id);
-      
+
       if (error) {
         alert("Failed to update item: " + error.message);
         console.error("Update error:", error);
@@ -202,7 +202,7 @@ export default function GroceriesPage() {
         .insert([py])
         .select()
         .single();
-        
+
       if (error) {
         alert("Database failed to save: " + error.message);
         console.error("Insert error:", error);
@@ -349,8 +349,8 @@ export default function GroceriesPage() {
           <div className="card animate-fade-in" style={{ width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 24px 48px rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 className="text-2xl">{editingItemId ? "Edit Item" : "Add to List"}</h2>
-              <button 
-                onClick={() => { setIsModalOpen(false); setEditingItemId(null); }} 
+              <button
+                onClick={() => { setIsModalOpen(false); setEditingItemId(null); }}
                 style={{ padding: '8px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

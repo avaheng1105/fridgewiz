@@ -84,36 +84,36 @@ export default function RecipesPage() {
   const [mTime, setMTime] = useState("30 min");
   const [mDifficulty, setMDifficulty] = useState("Medium");
   const [mInstructions, setMInstructions] = useState("");
-  const [mIngredients, setMIngredients] = useState<{name: string, qty: string, unit: string}[]>([{name: "", qty: "1", unit: "piece"}]);
+  const [mIngredients, setMIngredients] = useState<{ name: string, qty: string, unit: string }[]>([{ name: "", qty: "1", unit: "piece" }]);
 
   const handleImport = async () => {
     if (!importUrlStr.trim()) return;
     setIsImporting(true);
 
     try {
-      const response = await fetch('https://n8n.ivangan.my/webhook-test/analyze_recipe', {
+      const response = await fetch('https://n8n.ivangan.my/webhook/analyze_recipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: importUrlStr.trim() }),
       });
 
       if (!response.ok) {
-         throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const responseData = await response.json();
       console.log("Success!", responseData);
-      
+
       const recipeData = Array.isArray(responseData) ? responseData[0] : responseData;
       if (!recipeData) throw new Error("Empty response from AI");
-      
+
       setMTitle(recipeData.recipe_name || recipeData.title || recipeData.name || "");
-      
+
       const pTime = recipeData.prep_time_minutes ? `${recipeData.prep_time_minutes} min` : (recipeData.time || recipeData.prep_time || "30 min");
       setMTime(String(pTime));
-      
+
       setMDifficulty(recipeData.difficulty || "Medium");
-      
+
       let instr = "";
       if (Array.isArray(recipeData.instructions)) {
         instr = recipeData.instructions.map((step: string, idx: number) => `${idx + 1}. ${step}`).join('\n\n');
@@ -121,7 +121,7 @@ export default function RecipesPage() {
         instr = recipeData.instructions || recipeData.description || "";
       }
       setMInstructions(instr);
-      
+
       if (recipeData.ingredients && Array.isArray(recipeData.ingredients) && recipeData.ingredients.length > 0) {
         const parsedIngs = recipeData.ingredients.map((i: any) => {
           if (typeof i === 'string') return { name: i, qty: "1", unit: "piece" };
@@ -133,11 +133,11 @@ export default function RecipesPage() {
         });
         setMIngredients(parsedIngs);
       }
-      
+
       setShowImportUrl(false);
       setImportUrlStr("");
-      setShowManualEntry(true); 
-      
+      setShowManualEntry(true);
+
     } catch (error) {
       console.error("The Alchemist failed!", error);
       alert("AI Extraction failed. Ensure your n8n workflow is active and returning exact JSON mappings.");
@@ -153,7 +153,7 @@ export default function RecipesPage() {
     }
 
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     // Parse time string to INT4
     let parsedTime = parseInt(String(mTime).replace(/[^\d]/g, ''), 10);
     if (isNaN(parsedTime)) parsedTime = 30;
@@ -168,7 +168,7 @@ export default function RecipesPage() {
       difficulty: mDifficulty,
       instructions: instrArray
     } as any;
-    
+
     if (user) rPayload.user_id = user.id;
 
     let activeRecipeId = editingRecipeId;
@@ -200,7 +200,7 @@ export default function RecipesPage() {
         category: "Pantry",
         is_countable: ["pcs", "piece", "pieces", "packs"].includes(i.unit.toLowerCase())
       }));
-      
+
       if (pPayloads.length > 0) {
         const { error: ingErr } = await supabase.from("recipe_ingredients").insert(pPayloads);
         if (ingErr) console.error("Ingredients error:", ingErr);
@@ -212,7 +212,7 @@ export default function RecipesPage() {
     setMTime("30 min");
     setMDifficulty("Medium");
     setMInstructions("");
-    setMIngredients([{name: "", qty: "1", unit: "piece"}]);
+    setMIngredients([{ name: "", qty: "1", unit: "piece" }]);
     setShowManualEntry(false);
     fetchRecipes();
   };
@@ -233,22 +233,22 @@ export default function RecipesPage() {
         needed_ingredients: recipe.rawIngredients || []
       };
 
-      const response = await fetch('https://n8n.ivangan.my/webhook-test/check-inventory', {
+      const response = await fetch('https://n8n.ivangan.my/webhook/check-inventory', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-         throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const responseData = await response.json();
       console.log("Check Inventory Success!", responseData);
-      
+
       let statusMap: Record<string, "sufficient" | "check" | "missing"> = {};
       const items = Array.isArray(responseData) ? responseData : (responseData.needed_ingredients || responseData.results || responseData.data || []);
-      
+
       if (Array.isArray(items)) {
         items.forEach((item: any) => {
           if (item && item.item_name && item.status) {
@@ -257,15 +257,15 @@ export default function RecipesPage() {
         });
       } else if (typeof responseData === 'object' && responseData !== null) {
         Object.entries(responseData).forEach(([k, v]: [string, any]) => {
-           if (typeof v === 'string') statusMap[k.toLowerCase()] = v.toLowerCase() as any;
-           else if (v && v.status) statusMap[k.toLowerCase()] = v.status.toLowerCase() as any;
+          if (typeof v === 'string') statusMap[k.toLowerCase()] = v.toLowerCase() as any;
+          else if (v && v.status) statusMap[k.toLowerCase()] = v.status.toLowerCase() as any;
         });
       }
 
       setIngredientAnalysis(statusMap);
       setCheckStatus("success");
       setTimeout(() => setCheckStatus("idle"), 3000);
-      
+
     } catch (error) {
       console.error("Check ingredients failed!", error);
       setCheckStatus("error");
@@ -304,14 +304,14 @@ export default function RecipesPage() {
 
       const { error } = await supabase.from("grocery_list").insert([py]);
       if (error) throw error;
-      
+
       if (user) {
-         await supabase.from("activity_log").insert([{
-           user_id: user.id,
-           action: "Added to list",
-           item: py.item_name,
-           icon: "🛒"
-         }]);
+        await supabase.from("activity_log").insert([{
+          user_id: user.id,
+          action: "Added to list",
+          item: py.item_name,
+          icon: "🛒"
+        }]);
       }
 
       alert(`Added ${cartItemName} to Groceries!`);
@@ -326,7 +326,7 @@ export default function RecipesPage() {
     const initialMap: Record<number, { qty: number | string, finished: boolean }> = {};
     selected.rawIngredients.forEach((ing, i) => {
       initialMap[i] = {
-        qty: ing.is_countable ? (ing.qty_required || 1) : "", 
+        qty: ing.is_countable ? (ing.qty_required || 1) : "",
         finished: false
       };
     });
@@ -348,7 +348,7 @@ export default function RecipesPage() {
           .select("id, quantity")
           .eq("item_name", rawIng.item_name)
           .order("created_at", { ascending: true });
-        
+
         if (!invMatches || invMatches.length === 0) continue;
 
         if (rawIng.is_countable) {
@@ -358,7 +358,7 @@ export default function RecipesPage() {
           for (const match of invMatches) {
             if (remainingToDeduct <= 0) break;
             const currentQty = match.quantity || 0;
-            
+
             if (currentQty <= remainingToDeduct) {
               await supabase.from("inventory").delete().eq("id", match.id);
               remainingToDeduct -= currentQty;
@@ -370,7 +370,7 @@ export default function RecipesPage() {
         } else {
           if (usage.finished) {
             for (const match of invMatches) {
-               await supabase.from("inventory").delete().eq("id", match.id);
+              await supabase.from("inventory").delete().eq("id", match.id);
             }
           }
         }
@@ -392,7 +392,7 @@ export default function RecipesPage() {
         setShowCookedModal(false);
         setSelected(null);
       }, 1500);
-      
+
     } catch (err: any) {
       alert("Error updating inventory: " + err.message);
     } finally {
@@ -407,7 +407,7 @@ export default function RecipesPage() {
     setMTime(recipe.time);
     setMDifficulty(recipe.difficulty);
     setMInstructions(recipe.instructions || "");
-    
+
     if (recipe.rawIngredients && recipe.rawIngredients.length > 0) {
       setMIngredients(recipe.rawIngredients.map(ing => ({
         name: ing.item_name,
@@ -415,7 +415,7 @@ export default function RecipesPage() {
         unit: ing.unit
       })));
     } else {
-      setMIngredients([{name: "", qty: "1", unit: "piece"}]);
+      setMIngredients([{ name: "", qty: "1", unit: "piece" }]);
     }
     setShowManualEntry(true);
   };
@@ -511,7 +511,7 @@ export default function RecipesPage() {
               const rawIng = selected.rawIngredients?.[idx];
               const nameKey = rawIng ? rawIng.item_name.toLowerCase() : "";
               const status = ingredientAnalysis && ingredientAnalysis[nameKey] ? ingredientAnalysis[nameKey] : null;
-              
+
               const isSufficient = status === 'sufficient' || status === 'yes';
               const isMissing = status === 'missing' || status === 'no';
               const isCheck = status === 'check' || status === 'partial';
@@ -524,10 +524,10 @@ export default function RecipesPage() {
                     </span>
                     <span style={{ fontSize: "0.9rem" }}>{ing}</span>
                   </div>
-                  
+
                   {status && isMissing && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <button 
+                      <button
                         onClick={() => addToGroceryList(rawIng)}
                         style={{ background: 'var(--bg-elevated)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--brand-primary)', flexShrink: 0 }}
                         title="Add to Grocery List"
@@ -539,7 +539,7 @@ export default function RecipesPage() {
                 </div>
               );
             })}
-            
+
             {Boolean(selected.instructions) && (
               <>
                 <p style={{ fontWeight: 700, fontSize: "0.85rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 16, marginBottom: 8 }}>Instructions</p>
@@ -550,16 +550,16 @@ export default function RecipesPage() {
             )}
 
             <div style={{ display: 'flex', gap: '12px', marginTop: 20 }}>
-              <button 
-                className="btn" 
+              <button
+                className="btn"
                 style={{ flex: 1, padding: '12px 8px', fontSize: '13px', textAlign: 'center', whiteSpace: 'normal', lineHeight: 1.2, backgroundColor: '#ffffff', color: 'var(--brand-primary)', boxShadow: '0 4px 15px rgba(255,255,255,0.1)' }}
                 onClick={() => handleCheckIngredients(selected)}
                 disabled={checkStatus === "checking"}
               >
                 {checkStatus === "checking" ? "⏳ Sending..." : checkStatus === "success" ? "✅ Checked!" : checkStatus === "error" ? "❌ Failed" : "📝 Check Ingredients"}
               </button>
-              <button 
-                className="btn btn-primary" 
+              <button
+                className="btn btn-primary"
                 style={{ flex: 1, padding: '12px 8px', fontSize: '14px', textAlign: 'center' }}
                 onClick={openCookedModal}
               >
@@ -624,8 +624,8 @@ export default function RecipesPage() {
           <div className="card animate-fade-in" style={{ width: '100%', maxWidth: '450px', maxHeight: '85vh', overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 24px 48px rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 className="text-2xl">{editingRecipeId ? "Edit Recipe" : "Manual Recipe"}</h2>
-              <button 
-                onClick={() => { setShowManualEntry(false); setEditingRecipeId(null); }} 
+              <button
+                onClick={() => { setShowManualEntry(false); setEditingRecipeId(null); }}
                 style={{ padding: '8px', color: 'var(--text-muted)', cursor: 'pointer', background: 'transparent', border: 'none' }}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -634,7 +634,7 @@ export default function RecipesPage() {
                 </svg>
               </button>
             </div>
-            
+
             <div className="input-wrapper">
               <input className="input" placeholder="Recipe Title (e.g. Pasta)" value={mTitle} onChange={(e) => setMTitle(e.target.value)} />
             </div>
@@ -649,7 +649,7 @@ export default function RecipesPage() {
             </div>
 
             <p style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '8px', textTransform: 'uppercase' }}>Ingredients</p>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {mIngredients.map((ing, idx) => (
                 <div key={idx} style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
@@ -660,8 +660,8 @@ export default function RecipesPage() {
                 </div>
               ))}
             </div>
-            
-            <button 
+
+            <button
               onClick={() => setMIngredients(prev => [...prev, { name: "", qty: "1", unit: "piece" }])}
               style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px dashed var(--border-subtle)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}
             >
@@ -670,10 +670,10 @@ export default function RecipesPage() {
 
             <p style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '8px', textTransform: 'uppercase' }}>Instructions</p>
             <div className="input-wrapper">
-              <textarea 
-                className="input" 
-                placeholder="Step 1: Boil water..." 
-                value={mInstructions} 
+              <textarea
+                className="input"
+                placeholder="Step 1: Boil water..."
+                value={mInstructions}
                 onChange={(e) => setMInstructions(e.target.value)}
                 style={{ minHeight: '80px', resize: 'vertical', paddingTop: '12px', lineHeight: 1.5 }}
               />
@@ -690,7 +690,7 @@ export default function RecipesPage() {
       <div style={{ position: 'fixed', bottom: 'calc(var(--nav-height) + var(--safe-bottom) + 24px)', right: '24px', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
 
         {/* The expanded menu items */}
-        <div style={{ 
+        <div style={{
           display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-end', marginBottom: '8px',
           opacity: showFabMenu ? 1 : 0,
           transform: showFabMenu ? 'translateY(0)' : 'translateY(16px)',
@@ -742,7 +742,7 @@ export default function RecipesPage() {
               <h2 className="text-2xl">Add to Groceries</h2>
               <button className={styles.closeBtn} onClick={() => setShowCartModal(false)}>✕</button>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
               <div className="input-wrapper">
                 <input className="input" placeholder="Item Name" value={cartItemName} onChange={(e) => setCartItemName(e.target.value)} autoFocus />
@@ -763,9 +763,9 @@ export default function RecipesPage() {
                 <CustomSelect value={cartItemCategory} onChange={setCartItemCategory} options={addCategories} />
               </div>
 
-              <button 
-                className="btn btn-primary w-full" 
-                style={{ marginTop: '8px', padding: '14px', fontSize: '16px' }} 
+              <button
+                className="btn btn-primary w-full"
+                style={{ marginTop: '8px', padding: '14px', fontSize: '16px' }}
                 onClick={confirmAddToCart}
               >
                 Save Item
@@ -783,7 +783,7 @@ export default function RecipesPage() {
               <h2 className="text-2xl">Confirm Ingredients Used</h2>
               {!isDeducting && <button className={styles.closeBtn} onClick={() => setShowCookedModal(false)}>✕</button>}
             </div>
-            
+
             <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: 20 }}>
               Adjust the amounts you actually used so we can update your inventory.
             </p>
@@ -792,38 +792,38 @@ export default function RecipesPage() {
               {selected.rawIngredients?.map((ing, idx) => {
                 const myUsage = usageMap[idx];
                 if (!myUsage) return null;
-                
+
                 return (
                   <div key={idx} className="card" style={{ padding: '12px', border: '1px solid var(--border-subtle)', background: 'rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>{ing.item_name}</span>
                       <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Recipe: {ing.qty_required} {ing.unit}</span>
                     </div>
-                    
+
                     {ing.is_countable ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
                         <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Amount Used:</span>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', minWidth: '100px' }}>
-                          <button 
+                          <button
                             onClick={() => setUsageMap(prev => {
-                               const cur = Number(prev[idx].qty) || 0;
-                               return {...prev, [idx]: { ...prev[idx], qty: Math.max(0, cur - 1) }};
+                              const cur = Number(prev[idx].qty) || 0;
+                              return { ...prev, [idx]: { ...prev[idx], qty: Math.max(0, cur - 1) } };
                             })}
                             style={{ padding: '6px 12px', fontSize: '1.2rem', color: 'var(--text-primary)', background: 'transparent', border: 'none', cursor: 'pointer' }}
                           >
-                          −
+                            −
                           </button>
                           <span style={{ fontWeight: 600, fontSize: '1.05rem', minWidth: '24px', textAlign: 'center' }}>
                             {myUsage.qty}
                           </span>
-                          <button 
+                          <button
                             onClick={() => setUsageMap(prev => {
-                               const cur = Number(prev[idx].qty) || 0;
-                               return {...prev, [idx]: { ...prev[idx], qty: cur + 1 }};
+                              const cur = Number(prev[idx].qty) || 0;
+                              return { ...prev, [idx]: { ...prev[idx], qty: cur + 1 } };
                             })}
                             style={{ padding: '6px 12px', fontSize: '1.2rem', color: 'var(--text-primary)', background: 'transparent', border: 'none', cursor: 'pointer' }}
                           >
-                          +
+                            +
                           </button>
                         </div>
                         <span style={{ fontSize: '0.85rem', width: '40px' }}>{ing.unit}</span>
@@ -831,10 +831,10 @@ export default function RecipesPage() {
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px', background: 'rgba(0,0,0,0.2)', padding: '8px 12px', borderRadius: '8px' }}>
                         <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Finished all of this ingredient?</span>
-                        <div 
-                          onClick={() => setUsageMap(prev => ({...prev, [idx]: { ...prev[idx], finished: !myUsage.finished }}))}
-                          style={{ 
-                            width: '26px', height: '26px', borderRadius: '6px', 
+                        <div
+                          onClick={() => setUsageMap(prev => ({ ...prev, [idx]: { ...prev[idx], finished: !myUsage.finished } }))}
+                          style={{
+                            width: '26px', height: '26px', borderRadius: '6px',
                             background: myUsage.finished ? 'var(--brand-primary)' : 'rgba(255,255,255,0.05)',
                             border: myUsage.finished ? 'none' : '1px solid var(--border-subtle)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: '0.2s'
@@ -849,16 +849,16 @@ export default function RecipesPage() {
               })}
             </div>
 
-            <button 
-              className="btn btn-primary w-full" 
-              style={{ 
-                marginTop: '24px', padding: '14px', fontSize: '16px', 
+            <button
+              className="btn btn-primary w-full"
+              style={{
+                marginTop: '24px', padding: '14px', fontSize: '16px',
                 opacity: isDeducting ? 0.7 : 1,
                 backgroundColor: deductSuccess ? 'var(--color-success)' : undefined,
                 color: deductSuccess ? '#ffffff' : undefined,
                 border: deductSuccess ? 'none' : undefined,
                 transition: 'all 0.3s ease'
-              }} 
+              }}
               onClick={confirmCookedDeductions}
               disabled={isDeducting || deductSuccess}
             >
